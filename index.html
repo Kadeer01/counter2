@@ -39,7 +39,7 @@
 </head>
 <body>
 
-<h2>Counter DApp</h2>
+<h2>Counter DApp Test</h2>
 
 <button onclick="connectWallet()">Connect MetaMask</button>
 <p id="status">Wallet not connected</p>
@@ -87,13 +87,15 @@
     let contract;
 
     async function connectWallet() {
-        if (!window.ethereum) {
-            alert("MetaMask not detected!");
-            return;
-        }
+    if (!window.ethereum) {
+        alert("MetaMask not detected!");
+        return;
+    }
 
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-
+    try {
+        await window.ethereum.request({
+            method: "eth_requestAccounts"
+        });
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
         signer = provider.getSigner();
@@ -103,7 +105,12 @@
         document.getElementById("status").innerText = "Connected: " + user;
 
         loadCount();
+    } catch (error) {
+        console.error(error);
+        alert("Failed to connect: " + error.message);
     }
+}
+
 
     async function loadCount() {
         const value = await contract.count();
