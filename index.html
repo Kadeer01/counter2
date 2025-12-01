@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Counter DApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+
+        input {
+            padding: 8px;
+            margin-top: 6px;
+            width: 200px;
+        }
+
+        #status {
+            margin-top: 10px;
+            color: green;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Counter DApp</h2>
+
+<button onclick="connectWallet()">Connect MetaMask</button>
+<p id="status">Wallet not connected</p>
+
+<div class="card">
+    <h3>Counter Value</h3>
+    <p style="font-size: 24px;">Current Count: <span id="count">?</span></p>
+    <button onclick="increment()">Increment</button>
+    <button onclick="decrement()">Decrement</button>
+</div>
+
+<div class="card">
+    <h3>Owner Controls</h3>
+
+    <label>New Step Value:</label><br>
+    <input id="newStep" type="number" placeholder="Enter step (e.g. 1)">
+    <br>
+    <button onclick="setStep()">Update Step</button>
+    <br><br>
+
+    <label>Reset Counter To:</label><br>
+    <input id="resetValue" type="number" placeholder="Enter number">
+    <br>
+    <button onclick="resetCounter()">Reset</button>
+</div>
+
+<script>
+    // ABI of your Counter contract
+    const abi = [
+        "function count() public view returns (uint256)",
+        "function step() public view returns (uint256)",
+        "function owner() public view returns (address)",
+        "function increment() external",
+        "function decrement() external",
+        "function setStep(uint256 newStep) external",
+        "function reset(uint256 newValue) external",
+        "function getCount() external view returns (int256)"
+    ];
+
+    // TODO: Replace with your deployed contract address
+    const contractAddress = "0x745D9FcdDA76EB52Cf1F2E824051EaE5b46a5c1F";
+
+    let provider;
+    let signer;
+    let contract;
+
+    async function connectWallet() {
+        if (!window.ethereum) {
+            alert("MetaMask not detected!");
+            return;
+        }
+
+        awaitethereum.request({ method: "eth_requestAccounts" });
+
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = provider.getSigner();
+        contract = new ethers.Contract(contractAddress, abi, signer);
+
+        const user = await signer.getAddress();
+        document.getElementById("status").innerText = "Connected: " + user;
+
+        loadCount();
+    }
+
+    async function loadCount() {
+        const value = await contract.count();
+        document.getElementById("count").innerText = value.toString();
+    }
+
+    async function increment() {
+        const tx = await contract.increment();
+        await tx.wait();
+        loadCount();
+    }
+
+    async function decrement() {
+        const tx = await contract.decrement();
+        await tx.wait();
+        loadCount();
+    }
+
+    async function setStep() {
+        const newStep = document.getElementById("newStep").value;
+        if (!newStep) return alert("Enter a step value");
+
+        const tx = await contract.setStep(newStep);
+        await tx.wait();
+        alert("Step updated!");
+    }
+
+    async function resetCounter() {
+        const val = document.getElementById("resetValue").value;
+        if (!val) return alert("Enter reset value");
+
+        const tx = await contract.reset(val);
+        await tx.wait();
+        loadCount();
+        alert("Counter reset!");
+    }
+</script>
+
+</body>
+</html>
